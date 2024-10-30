@@ -2,10 +2,34 @@ import React, { useEffect, useState } from 'react';
 import { ref, runTransaction, onValue } from 'firebase/database';
 import { db } from '../lib/firebase';
 import Link from 'next/link';
+import Image from 'next/image'; // Added for image optimization
 import { ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info } from 'lucide-react';
 
-const useVoteCount = () => {
-  const [votes, setVotes] = useState({ votes1: 0, votes2: 0 });
+interface Comment {
+  id: string;
+  author: string;
+  text: string;
+  publishedAt: Date;
+  authorProfileImg: string;
+  likeCount: number;
+}
+
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  viewCount: string;
+  likeCount: string;
+}
+
+interface VoteCount {
+  votes1: number;
+  votes2: number;
+}
+
+const useVoteCount = (): VoteCount => {
+  const [votes, setVotes] = useState<VoteCount>({ votes1: 0, votes2: 0 });
   
   useEffect(() => {
     const votesRef = ref(db, 'matches/match1');
@@ -26,22 +50,24 @@ const useVoteCount = () => {
   return votes;
 };
 
-const VotingPage = () => {
-  const [videos, setVideos] = useState([]);
-  const [comments, setComments] = useState([]);
+const VotingPage: React.FC = () => {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [hasVoted, setHasVoted] = useState(false);
-
-useEffect(() => {
-  setHasVoted(!!window.localStorage.getItem('hasVoted'));
-}, []);
   const [expandedComments, setExpandedComments] = useState(false);
   const [showVideoDetails, setShowVideoDetails] = useState(false);
   const [loading, setLoading] = useState(true);
   const votes = useVoteCount();
   const API_KEY = 'AIzaSyBihpLsF0FrAsCXdB_Ryb2ba0_JQuNfgnU';
 
-  const handleVote = async (pieceIndex) => {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHasVoted(!!window.localStorage.getItem('hasVoted'));
+    }
+  }, []);
+
+  const handleVote = async (pieceIndex: number): Promise<void> => {
     if (hasVoted) return;
     
     const voteRef = ref(db, 'matches/match1');
