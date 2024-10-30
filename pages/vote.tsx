@@ -262,184 +262,134 @@ const VotingPage: React.FC = () => {
   const currentVideo = videos[currentVideoIndex];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <nav className="bg-black border-b border-gray-800 px-4 py-3">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-            TezTones Vote
-          </h1>
-          <Link 
-            href="/" 
-            className="bg-gray-700 text-white px-6 py-2 rounded-full font-semibold hover:bg-gray-600 transition-colors"
-          >
-            Watch Live
-          </Link>
+    <div className="min-h-screen bg-[#1a1b26] text-white">
+      {/* Header */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#13141f] border-b border-gray-800 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+              TezTones Vote
+            </h1>
+            <Link 
+              href="/" 
+              className="bg-[#2a2d3d] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#363b54] transition-colors"
+            >
+              Watch Live
+            </Link>
+          </div>
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl mb-6">
+      {/* Main Content */}
+      <main className="pt-16 container mx-auto px-4 pb-8">
+        {/* Video Player */}
+        <div className="bg-[#1f2133] rounded-xl overflow-hidden shadow-xl mb-6">
           <div className="aspect-video relative">
-            <iframe
-              className="w-full h-full absolute inset-0"
-              src={`https://www.youtube.com/embed/${currentVideo.id}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+            {currentVideo && (
+              <iframe
+                className="w-full h-full absolute inset-0"
+                src={`https://www.youtube.com/embed/${currentVideo.id}`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            )}
           </div>
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-4">
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <span className="text-gray-400">Currently Viewing</span>
+                <p className="text-gray-400 text-sm">Currently Viewing</p>
                 <h2 className="text-xl font-bold">Piece {currentVideoIndex + 1}</h2>
               </div>
               <button
                 onClick={switchVideo}
-                className="bg-gray-700 text-white px-6 py-2 rounded-full hover:bg-gray-600 transition-colors"
+                className="bg-[#2a2d3d] text-white px-6 py-2 rounded-full hover:bg-[#363b54] transition-all transform hover:scale-105"
               >
                 Switch to Piece {currentVideoIndex === 0 ? '2' : '1'}
               </button>
             </div>
-
-            <div className="border-t border-gray-700 pt-4">
-              <button
-                onClick={() => setShowVideoDetails(!showVideoDetails)}
-                className="flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors w-full"
-              >
-                <Info size={20} />
-                <span>Video Details</span>
-                {showVideoDetails ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              </button>
-              
-              {showVideoDetails && (
-                <div className="mt-4 space-y-3 text-gray-300">
-                  <div>
-                    <h3 className="font-semibold text-white">{currentVideo.title}</h3>
-                    <div className="flex gap-4 text-sm mt-2">
-                      <span>{currentVideo.publishedAt}</span>
-                      <span>👁️ {currentVideo.viewCount} views</span>
-                      <span>👍 {currentVideo.likeCount} likes</span>
-                    </div>
-                  </div>
-                  <p className="whitespace-pre-line text-sm">{currentVideo.description}</p>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-xl p-6 shadow-2xl mb-6">
+        {/* Comments Section */}
+        <div className="bg-[#1f2133] rounded-xl p-6 shadow-xl mb-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2 text-gray-400">
               <MessageCircle className="w-5 h-5" />
               <span>{comments.length} Comments</span>
             </div>
             <a
-              href={`https://www.youtube.com/watch?v=${currentVideo.id}`}
+              href={`https://www.youtube.com/watch?v=${currentVideo?.id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
             >
-              <span>Go to YouTube to Comment</span>
+              Go to YouTube to Comment
               <ExternalLink className="w-4 h-4" />
             </a>
           </div>
 
-          {loading ? (
-            <div className="animate-pulse space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex space-x-4">
-                  <div className="w-10 h-10 bg-gray-700 rounded-full"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-700 rounded w-1/4"></div>
-                    <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                  </div>
+          {/* Comments List */}
+          <div className="space-y-6">
+            {visibleComments.map(comment => (
+              <div key={comment.id} className="flex gap-4">
+                <div className="relative w-10 h-10">
+                  <Image
+                    src={comment.authorProfileImg || '/api/placeholder/40/40'}
+                    alt={comment.author}
+                    width={40}
+                    height={40}
+                    className="rounded-full"
+                  />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {visibleComments.map(comment => (
-                <div key={comment.id} className="flex gap-4">
-                  <div className="relative w-10 h-10">
-                    <Image
-                      src={comment.authorProfileImg || '/api/placeholder/40/40'}
-                      alt={comment.author}
-                      className="rounded-full"
-                      width={40}
-                      height={40}
-                    />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{comment.author}</span>
+                    <span className="text-sm text-gray-400">
+                      {comment.publishedAt.toLocaleDateString()}
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold">{comment.author}</span>
-                      <span className="text-sm text-gray-400">
-                        {comment.publishedAt.toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-gray-300">{comment.text}</p>
-                  </div>
+                  <p className="text-gray-300 mt-1">{comment.text}</p>
                 </div>
-              ))}
-
-              {comments.length > 5 && (
-                <button
-                onClick={() => setExpandedComments(!expandedComments)}
-                className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                {expandedComments ? (
-                  <>
-                    <ChevronUp className="w-5 h-5" />
-                    Show Less
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-5 h-5" />
-                    Show {comments.length - 5} More Comments
-                  </>
-                )}
-              </button>
-            )}
+              </div>
+            ))}
           </div>
-        )}
-      </div>
-
-      <div className="bg-gray-800 rounded-xl p-6 shadow-2xl">
-        <h3 className="text-xl font-bold mb-6">Cast Your Vote</h3>
-        {renderVoteResults()}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[0, 1].map((index) => (
-            <button
-              key={index}
-              onClick={() => handleVote(index)}
-              disabled={hasVoted}
-              className={`p-6 rounded-xl text-lg font-bold transition-all transform hover:scale-105 ${
-                hasVoted
-                  ? localStorage.getItem('votedFor') === String(index)
-                    ? 'bg-gradient-to-r from-green-500 to-green-600'
-                    : 'bg-gray-700 opacity-50'
-                  : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
-              }`}
-            >
-              {hasVoted
-                ? localStorage.getItem('votedFor') === String(index)
-                  ? `🏆 You voted for Piece ${index + 1}!`
-                  : `Piece ${index + 1}`
-                : `Vote for Piece ${index + 1}`}
-            </button>
-          ))}
         </div>
-        {hasVoted && (
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
-              Thanks for voting! Your support helps determine the winner.
-            </p>
+
+        {/* Voting Section */}
+        <div className="bg-[#1f2133] rounded-xl p-6 shadow-xl">
+          <h3 className="text-2xl font-bold mb-6">Cast Your Vote</h3>
+          {renderVoteResults()}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[0, 1].map((index) => (
+              <button
+                key={index}
+                onClick={() => handleVote(index)}
+                disabled={hasVoted}
+                className={`p-6 rounded-xl text-lg font-bold transition-all transform hover:scale-105 ${
+                  hasVoted
+                    ? localStorage.getItem('votedFor') === String(index)
+                      ? 'bg-gradient-to-r from-green-500 to-green-600'
+                      : 'bg-[#2a2d3d] opacity-50'
+                    : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
+                }`}
+              >
+                {hasVoted
+                  ? localStorage.getItem('votedFor') === String(index)
+                    ? `🏆 You voted for Piece ${index + 1}!`
+                    : `Piece ${index + 1}`
+                  : `Vote for Piece ${index + 1}`}
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+          {hasVoted && (
+            <div className="mt-6 text-center text-gray-400">
+              Thanks for voting! Your support helps determine the winner.
+            </div>
+          )}
+        </div>
+      </main>
     </div>
-  </div>
-);
+  );
 };
 
 export default VotingPage;
