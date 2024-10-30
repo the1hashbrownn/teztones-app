@@ -95,6 +95,44 @@ const VotingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const votes = useVoteCount();
 
+  const handleVote = async (pieceIndex: number): Promise<void> => {
+    if (hasVoted) return;
+    
+    const voteRef = ref(db, 'matches/match1');
+    
+    try {
+      await runTransaction(voteRef, (currentData) => {
+        if (!currentData) {
+          return {
+            votes1: pieceIndex === 0 ? 1 : 0,
+            votes2: pieceIndex === 1 ? 1 : 0,
+            active: true
+          };
+        }
+        
+        return {
+          ...currentData,
+          votes1: pieceIndex === 0 ? (currentData.votes1 || 0) + 1 : (currentData.votes1 || 0),
+          votes2: pieceIndex === 1 ? (currentData.votes2 || 0) + 1 : (currentData.votes2 || 0),
+        };
+      });
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('hasVoted', 'true');
+        localStorage.setItem('votedFor', String(pieceIndex));
+      }
+      setHasVoted(true);
+    } catch (error) {
+      console.error('Error casting vote:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHasVoted(!!localStorage.getItem('hasVoted'));
+    }
+  }, []);
+
   const loadComments = useCallback(async () => {
     setLoading(true);
     try {
@@ -346,62 +384,62 @@ const VotingPage: React.FC = () => {
 
               {comments.length > 5 && (
                 <button
-                  onClick={() => setExpandedComments(!expandedComments)}
-                  className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  {expandedComments ? (
-                    <>
-                      <ChevronUp className="w-5 h-5" />
-                      Show Less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="w-5 h-5" />
-                      Show {comments.length - 5} More Comments
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-gray-800 rounded-xl p-6 shadow-2xl">
-          <h3 className="text-xl font-bold mb-6">Cast Your Vote</h3>
-          {renderVoteResults()}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[0, 1].map((index) => (
-              <button
-                key={index}
-                onClick={() => handleVote(index)}
-                disabled={hasVoted}
-                className={`p-6 rounded-xl text-lg font-bold transition-all transform hover:scale-105 ${
-                  hasVoted
-                    ? localStorage.getItem('votedFor') === String(index)
-                      ? 'bg-gradient-to-r from-green-500 to-green-600'
-                      : 'bg-gray-700 opacity-50'
-                    : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
-                }`}
+                onClick={() => setExpandedComments(!expandedComments)}
+                className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
               >
-                {hasVoted
-                  ? localStorage.getItem('votedFor') === String(index)
-                    ? `🏆 You voted for Piece ${index + 1}!`
-                    : `Piece ${index + 1}`
-                  : `Vote for Piece ${index + 1}`}
+                {expandedComments ? (
+                  <>
+                    <ChevronUp className="w-5 h-5" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-5 h-5" />
+                    Show {comments.length - 5} More Comments
+                  </>
+                )}
               </button>
-            ))}
+            )}
           </div>
-          {hasVoted && (
-            <div className="mt-6 text-center">
-              <p className="text-gray-400">
-                Thanks for voting! Your support helps determine the winner.
-              </p>
-            </div>
-          )}
+        )}
+      </div>
+
+      <div className="bg-gray-800 rounded-xl p-6 shadow-2xl">
+        <h3 className="text-xl font-bold mb-6">Cast Your Vote</h3>
+        {renderVoteResults()}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[0, 1].map((index) => (
+            <button
+              key={index}
+              onClick={() => handleVote(index)}
+              disabled={hasVoted}
+              className={`p-6 rounded-xl text-lg font-bold transition-all transform hover:scale-105 ${
+                hasVoted
+                  ? localStorage.getItem('votedFor') === String(index)
+                    ? 'bg-gradient-to-r from-green-500 to-green-600'
+                    : 'bg-gray-700 opacity-50'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
+              }`}
+            >
+              {hasVoted
+                ? localStorage.getItem('votedFor') === String(index)
+                  ? `🏆 You voted for Piece ${index + 1}!`
+                  : `Piece ${index + 1}`
+                : `Vote for Piece ${index + 1}`}
+            </button>
+          ))}
         </div>
+        {hasVoted && (
+          <div className="mt-6 text-center">
+            <p className="text-gray-400">
+              Thanks for voting! Your support helps determine the winner.
+            </p>
+          </div>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default VotingPage;
