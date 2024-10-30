@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { ref, runTransaction, onValue } from 'firebase/database';
 import { db } from '../lib/firebase';
 import Link from 'next/link';
-import Image from 'next/image'; // Added for image optimization
+import Image from 'next/image';
 import { ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info } from 'lucide-react';
 
 interface Comment {
@@ -59,13 +59,35 @@ const VotingPage: React.FC = () => {
   const [showVideoDetails, setShowVideoDetails] = useState(false);
   const [loading, setLoading] = useState(true);
   const votes = useVoteCount();
-  const API_KEY = 'AIzaSyBihpLsF0FrAsCXdB_Ryb2ba0_JQuNfgnU';
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setHasVoted(!!window.localStorage.getItem('hasVoted'));
+  const loadComments = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (!videos[currentVideoIndex]?.id) return;
+      
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/commentThreads?` +
+        `part=snippet&videoId=${videos[currentVideoIndex].id}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}&maxResults=20`
+      );
+      
+      const data = await response.json();
+      
+      if (data.items) {
+        setComments(data.items.map((item: any) => ({
+          id: item.id,
+          author: item.snippet.topLevelComment.snippet.authorDisplayName,
+          text: item.snippet.topLevelComment.snippet.textDisplay,
+          publishedAt: new Date(item.snippet.topLevelComment.snippet.publishedAt),
+          authorProfileImg: item.snippet.topLevelComment.snippet.authorProfileImageUrl,
+          likeCount: item.snippet.topLevelComment.snippet.likeCount,
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [videos, currentVideoIndex]);
 
   const handleVote = async (pieceIndex: number): Promise<void> => {
     if (hasVoted) return;
@@ -97,34 +119,11 @@ const VotingPage: React.FC = () => {
     }
   };
 
-  const loadComments = async () => {
-    setLoading(true);
-    try {
-      if (!videos[currentVideoIndex]?.id) return;
-      
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/commentThreads?` +
-        `part=snippet&videoId=${videos[currentVideoIndex].id}&key=${API_KEY}&maxResults=20`
-      );
-      
-      const data = await response.json();
-      
-      if (data.items) {
-        setComments(data.items.map((item) => ({
-          id: item.id,
-          author: item.snippet.topLevelComment.snippet.authorDisplayName,
-          text: item.snippet.topLevelComment.snippet.textDisplay,
-          publishedAt: new Date(item.snippet.topLevelComment.snippet.publishedAt),
-          authorProfileImg: item.snippet.topLevelComment.snippet.authorProfileImageUrl,
-          likeCount: item.snippet.topLevelComment.snippet.likeCount,
-        })));
-      }
-    } catch (error) {
-      console.error('Error loading comments:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHasVoted(!!window.localStorage.getItem('hasVoted'));
     }
-  };
+  }, []);
 
   useEffect(() => {
     const loadVideos = async () => {
@@ -133,13 +132,13 @@ const VotingPage: React.FC = () => {
       try {
         const response = await fetch(
           `https://www.googleapis.com/youtube/v3/videos?` +
-          `part=snippet,statistics&id=${videoIds.join(',')}&key=${API_KEY}`
+          `part=snippet,statistics&id=${videoIds.join(',')}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`
         );
         
         const data = await response.json();
         
         if (data.items) {
-          setVideos(data.items.map((item) => ({
+          setVideos(data.items.map((item: any) => ({
             id: item.id,
             title: item.snippet.title,
             description: item.snippet.description,
@@ -160,7 +159,7 @@ const VotingPage: React.FC = () => {
     if (videos.length > 0) {
       loadComments();
     }
-  }, [currentVideoIndex, videos]);
+  }, [videos, loadComments]);
 
   const switchVideo = () => {
     setCurrentVideoIndex(prev => prev === 0 ? 1 : 0);
@@ -169,7 +168,7 @@ const VotingPage: React.FC = () => {
 
   const renderVoteResults = () => {
     const totalVotes = votes.votes1 + votes.votes2;
-    const getPercentage = (voteCount) => 
+    const getPercentage = (voteCount: number) => 
       totalVotes === 0 ? 0 : ((voteCount / totalVotes) * 100).toFixed(1);
 
     return (
@@ -325,11 +324,15 @@ const VotingPage: React.FC = () => {
             <div className="space-y-6">
               {visibleComments.map(comment => (
                 <div key={comment.id} className="flex gap-4">
-                  <img
-                    src={comment.authorProfileImg || '/api/placeholder/40/40'}
-                    alt={comment.author}
-                    className="w-10 h-10 rounded-full"
-                  />
+                  <div className="relative w-10 h-10">
+                    <Image
+                      src={comment.authorProfileImg || '/api/placeholder/40/40'}
+                      alt={comment.author}
+                      className="rounded-full"
+                      width={40}
+                      height={40}
+                    />
+                  </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold">{comment.author}</span>
