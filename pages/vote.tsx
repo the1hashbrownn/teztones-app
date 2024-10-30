@@ -5,6 +5,41 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronDown, ChevronUp, MessageCircle, ExternalLink, Info } from 'lucide-react';
 
+// YouTube API response interfaces
+interface YouTubeCommentSnippet {
+  authorDisplayName: string;
+  authorProfileImageUrl: string;
+  textDisplay: string;
+  publishedAt: string;
+  likeCount: number;
+}
+
+interface YouTubeComment {
+  id: string;
+  snippet: {
+    topLevelComment: {
+      snippet: YouTubeCommentSnippet;
+    };
+  };
+}
+
+interface YouTubeVideoSnippet {
+  title: string;
+  description: string;
+  publishedAt: string;
+}
+
+interface YouTubeVideoStatistics {
+  viewCount: string;
+  likeCount: string;
+}
+
+interface YouTubeVideo {
+  id: string;
+  snippet: YouTubeVideoSnippet;
+  statistics: YouTubeVideoStatistics;
+}
+
 interface Comment {
   id: string;
   author: string;
@@ -73,7 +108,7 @@ const VotingPage: React.FC = () => {
       const data = await response.json();
       
       if (data.items) {
-        setComments(data.items.map((item: any) => ({
+        setComments(data.items.map((item: YouTubeComment) => ({
           id: item.id,
           author: item.snippet.topLevelComment.snippet.authorDisplayName,
           text: item.snippet.topLevelComment.snippet.textDisplay,
@@ -89,42 +124,6 @@ const VotingPage: React.FC = () => {
     }
   }, [videos, currentVideoIndex]);
 
-  const handleVote = async (pieceIndex: number): Promise<void> => {
-    if (hasVoted) return;
-    
-    const voteRef = ref(db, 'matches/match1');
-    
-    try {
-      await runTransaction(voteRef, (currentData) => {
-        if (!currentData) {
-          return {
-            votes1: pieceIndex === 0 ? 1 : 0,
-            votes2: pieceIndex === 1 ? 1 : 0,
-            active: true
-          };
-        }
-        
-        return {
-          ...currentData,
-          votes1: pieceIndex === 0 ? (currentData.votes1 || 0) + 1 : (currentData.votes1 || 0),
-          votes2: pieceIndex === 1 ? (currentData.votes2 || 0) + 1 : (currentData.votes2 || 0),
-        };
-      });
-      
-      localStorage.setItem('hasVoted', 'true');
-      localStorage.setItem('votedFor', String(pieceIndex));
-      setHasVoted(true);
-    } catch (error) {
-      console.error('Error casting vote:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setHasVoted(!!window.localStorage.getItem('hasVoted'));
-    }
-  }, []);
-
   useEffect(() => {
     const loadVideos = async () => {
       const videoIds = ['mSeGecrtEqM', '59Dm0YYiBEk'];
@@ -138,7 +137,7 @@ const VotingPage: React.FC = () => {
         const data = await response.json();
         
         if (data.items) {
-          setVideos(data.items.map((item: any) => ({
+          setVideos(data.items.map((item: YouTubeVideo) => ({
             id: item.id,
             title: item.snippet.title,
             description: item.snippet.description,
