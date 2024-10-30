@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 const LiveStreamPage = () => {
-  const [liveStream, setLiveStream] = useState(null);
+  interface LiveStream {
+    id: string;
+    title: string;
+  }
+  
+  const [liveStream, setLiveStream] = useState<LiveStream | null>(null);
   const CHANNEL_ID = 'UCeLZvLUb0tXMK3hXBbM01ag';
   const API_KEY = 'AIzaSyBihpLsF0FrAsCXdB_Ryb2ba0_JQuNfgnU';
 
